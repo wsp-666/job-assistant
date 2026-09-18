@@ -1,0 +1,15 @@
+[Unit]
+Description=Job Assistant Cloud API
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/job-assistant
+Environment=PATH=/opt/job-assistant/.venv/bin
+ExecStart=/opt/job-assistant/.venv/bin/uvicorn app.main:app --app-dir api --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

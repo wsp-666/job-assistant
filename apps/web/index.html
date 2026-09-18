@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="ja-build" content="%JA_BUILD_VERSION%" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>求职助手 - 管理台</title>
+    <script>
+      (function () {
+        var KEY = "ja-web-build";
+        var build = "";
+        var meta = document.querySelector('meta[name="ja-build"]');
+        if (meta && meta.content && meta.content.indexOf("%JA_") !== 0) {
+          build = meta.content.trim();
+        }
+        if (!build) {
+          try {
+            var req = new XMLHttpRequest();
+            req.open("GET", "/build-version.txt?t=" + Date.now(), false);
+            req.send(null);
+            if (req.status === 200) build = (req.responseText || "").trim();
+          } catch (e) {}
+        }
+        if (!build) return;
+        var prev = localStorage.getItem(KEY);
+        if (prev && prev !== build) {
+          localStorage.setItem(KEY, build);
+          var path = location.pathname || "/";
+          location.replace(path + "?_v=" + encodeURIComponent(build));
+          return;
+        }
+        localStorage.setItem(KEY, build);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

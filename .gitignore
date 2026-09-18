@@ -1,0 +1,54 @@
+# Secrets and machine-local configuration
+.env
+.env.txt
+.env.local
+.env.*.local
+!.env.example
+!.env.cloud.example
+apps/web/.env.production
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+apps/*/node_modules/
+apps/*/dist/
+
+# Runtime data
+data/
+apps/data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.log
+
+# Build and release artifacts
+build/
+dist/
+dist-launcher/
+JobAssistant/
+release/
+*.exe
+*.zip
+*.lnk
+
+# Third-party reference trees (not part of this project)
+参考代码/
+
+# Local screenshots / delivery notes
+答题补充/*.png
+朋友交付版说明.md
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+

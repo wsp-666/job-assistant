@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>招聘表单回归页</title>
+  <style>
+    body { font: 16px/1.5 system-ui; max-width: 900px; margin: 24px auto; }
+    label { display: block; margin: 12px 0; }
+    input, textarea { width: 100%; box-sizing: border-box; padding: 8px; }
+    button { margin: 10px 8px 10px 0; padding: 8px 16px; }
+    section { border: 1px solid #ddd; padding: 16px; margin: 16px 0; }
+    .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  </style>
+</head>
+<body>
+  <main id="app">
+    <h1>校园招聘</h1>
+    <label>姓名 *<input required name="candidateName" placeholder="请输入姓名" /></label>
+    <label>手机号 *<input required name="mobile" placeholder="请输入手机号码" /></label>
+    <label>邮箱 *<input required name="email" type="email" /></label>
+
+    <section id="experience-section">
+      <button id="experience-toggle" type="button" aria-expanded="false">实习经历</button>
+      <div id="experience-records" hidden></div>
+      <button id="experience-add" type="button">添加实习经历</button>
+    </section>
+
+    <section id="project-section">
+      <button id="project-toggle" type="button" aria-expanded="false">项目经历</button>
+      <div id="project-records" hidden></div>
+      <button id="project-add" type="button">添加项目经历</button>
+    </section>
+    <section id="award-section">
+      <h2>获奖经历</h2>
+      <label>获奖经历<textarea name="awards"></textarea></label>
+    </section>
+    <section id="language-section">
+      <h2>语言能力</h2>
+      <label>英语水平<textarea name="languageAbility"></textarea></label>
+    </section>
+    <section id="certificate-section">
+      <h2>证书资质</h2>
+      <label>所获证书<textarea name="certificates"></textarea></label>
+    </section>
+    <label>编程语言<input name="programmingLanguage" /></label>
+    <button id="next" type="button">下一步</button>
+    <button id="run-autofill" type="button">运行自动填写回归</button>
+    <pre id="result"></pre>
+  </main>
+  <script>
+    const eventLog = [];
+    const experienceRecords = document.querySelector('#experience-records');
+    const projectRecords = document.querySelector('#project-records');
+    document.querySelector('#experience-toggle').onclick = (event) => {
+      const open = event.currentTarget.getAttribute('aria-expanded') !== 'true';
+      event.currentTarget.setAttribute('aria-expanded', String(open));
+      experienceRecords.hidden = !open;
+    };
+    document.querySelector('#project-toggle').onclick = (event) => {
+      const open = event.currentTarget.getAttribute('aria-expanded') !== 'true';
+      event.currentTarget.setAttribute('aria-expanded', String(open));
+      projectRecords.hidden = !open;
+    };
+    document.querySelector('#experience-add').onclick = () => {
+      eventLog.push('experience-added');
+      experienceRecords.hidden = false;
+      document.querySelector('#experience-toggle').setAttribute('aria-expanded', 'true');
+      experienceRecords.innerHTML = `
+        <div class="experience-record">
+          <label>公司名称 *<input required name="companyName" /></label>
+          <label>实习岗位 *<input required name="jobTitle" /></label>
+          <div class="date-row">
+            <label>开始时间 *<input required type="month" name="workStart" /></label>
+            <label>结束时间<input type="month" name="workEnd" /></label>
+          </div>
+          <label>实习内容 *<textarea required name="workDescription"></textarea></label>
+        </div>`;
+    };
+    document.querySelector('#project-add').onclick = () => {
+      eventLog.push('project-added');
+      projectRecords.hidden = false;
+      document.querySelector('#project-toggle').setAttribute('aria-expanded', 'true');
+      projectRecords.innerHTML = `
+        <div class="project-record">
+          <label>项目名称 *<input required name="projectName" /></label>
+          <label>项目角色<input name="projectRole" /></label>
+          <div class="date-row">
+            <label>开始年份 *<input required role="spinbutton" aria-label="开始年份" /></label>
+            <label>开始月份 *<input required role="spinbutton" aria-label="开始月份" /></label>
+          </div>
+          <label>结束时间 *<input required readonly name="projectEnd" placeholder="YYYY-MM" /></label>
+          <label>项目链接<input name="projectUrl" /></label>
+          <label>项目描述 *<textarea required name="projectDescription"></textarea></label>
+        </div>`;
+      const picker = projectRecords.querySelector('[name="projectEnd"]');
+      picker.onclick = () => {
+        document.querySelector('#date-popup')?.remove();
+        const popup = document.createElement('div');
+        popup.id = 'date-popup';
+        popup.setAttribute('role', 'dialog');
+        popup.innerHTML = '<button class="picker-year-view">2025年</button>';
+        document.body.appendChild(popup);
+        popup.querySelector('button').onclick = () => {
+          popup.innerHTML = '<button class="year-cell">2025年</button><button class="year-cell">2026年</button>';
+          popup.querySelectorAll('button').forEach((year) => year.onclick = () => {
+            const selectedYear = year.textContent.replace('年', '');
+            popup.innerHTML = Array.from({ length: 12 }, (_, index) => `<button class="month-cell" data-year="${selectedYear}">${index + 1}月</button>`).join('');
+            popup.querySelectorAll('button').forEach((month) => month.onclick = () => {
+              picker.value = `${month.dataset.year}-${String(parseInt(month.textContent)).padStart(2, '0')}`;
+              picker.dispatchEvent(new Event('input', { bubbles: true }));
+              picker.dispatchEvent(new Event('change', { bubbles: true }));
+              popup.remove();
+            });
+          });
+        };
+      };
+    };
+    document.querySelector('#next').onclick = () => {
+      document.querySelector('#app').insertAdjacentHTML('beforeend', '<p id="advanced">已进入下一步</p>');
+    };
+    const listeners = [];
+    window.chrome = {
+      runtime: {
+        getURL: (path) => new URL(`/dist/${path}`, location.origin).href,
+        onMessage: { addListener: (listener) => listeners.push(listener) },
+        sendMessage: async () => ({ ok: true }),
+      },
+      storage: { local: { get: async () => ({}), set: async () => undefined } },
+    };
+    async function loadAutofill() {
+      const manifest = await fetch('/dist/manifest.json').then((response) => response.json());
+      const entry = manifest.content_scripts.find((item) => item.js.some((path) => path.includes('application-form')));
+      await import(`/dist/${entry.js[0]}`);
+      for (let attempt = 0; attempt < 20 && listeners.length === 0; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    }
+    const profile = {
+      full_name: '王似鹏', phone: '19855624161', email: 'test@example.com', gender: '男',
+      birth_date: '2003-01-01', current_city: '合肥', target_city: '北京', native_place: '安徽',
+      school: '安徽信息工程学院', major: '软件工程', discipline_category: '工学', degree: '本科',
+      graduation_date: '2027-07', work_years: '0', expected_salary: '12k', recruitment_source: '校园招聘',
+      portfolio_url: '', github_url: 'https://github.com/wsp-666/yunyu', linkedin_url: '',
+      summary: '软件工程专业，具备开发与交付经验。', education: '', experience: '', projects: '', skills: ['Java'],
+      awards: '全国高校商业精英挑战赛国家级二等奖。',
+      language_ability: '大学英语四级（CET-4），514分；能够阅读英文技术文档。',
+      certificates: '大学英语四级（CET-4，514分）', campus_experience: '',
+      resume_name: '王似鹏-Java后端开发简历.html', has_uploadable_resume: false, resume_file_url: null,
+      custom_fields: {}, effective_custom_fields: {
+        实习经历: '参与政企系统接口开发、多表关联、前后端联调与部署支持。',
+        项目经历: '负责渔见智能平台的库表设计、接口开发、联调与项目交付。',
+      },
+    };
+    document.querySelector('#run-autofill').onclick = async () => {
+      await loadAutofill();
+      const listener = listeners.at(-1);
+      const result = await new Promise((resolve) => listener(
+        { type: 'APPLICATION_FILL', profile, autoSubmit: false, overwrite: true },
+        {},
+        resolve,
+      ));
+      const values = Object.fromEntries(Array.from(document.querySelectorAll('input,textarea')).map((item) => [item.name || item.getAttribute('aria-label'), item.value]));
+      document.querySelector('#result').textContent = JSON.stringify({ result, values, eventLog }, null, 2);
+    };
+  </script>
+</body>
+</html>

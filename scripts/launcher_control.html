@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>求职助手</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    h1 { margin: 0 0 6px; font-size: 20px; }
+    .sub { color: #475569; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+    .status {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      background: #2563eb;
+      color: #fff;
+    }
+    button.secondary { background: #fff; color: #2563eb; border: 1px solid #93c5fd; }
+    button.danger { background: #dc2626; }
+    #log {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+      height: 130px;
+      overflow-y: auto;
+      font: 12px/1.5 Consolas, monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>求职助手</h1>
+  <div class="sub">纯本地运行：不上传云端。点「一键启动」后会弹出管理台窗口。</div>
+  <div class="status" id="status">正在检测服务状态…</div>
+  <div class="row">
+    <button onclick="startAll()">一键启动</button>
+    <button class="secondary" onclick="openAdmin()">打开管理台</button>
+    <button class="secondary" onclick="openExt()">Edge 插件页</button>
+    <button class="danger" onclick="stopAll()">停止服务</button>
+  </div>
+  <div id="log"></div>
+  <script>
+    function log(line) {
+      const el = document.getElementById("log");
+      const ts = new Date().toLocaleTimeString();
+      el.textContent += `[${ts}] ${line}\n`;
+      el.scrollTop = el.scrollHeight;
+    }
+    async function refresh() {
+      try {
+        const s = await pywebview.api.get_status();
+        document.getElementById("status").innerHTML = s.replace(/\n/g, "<br>");
+      } catch (e) {
+        document.getElementById("status").textContent = "状态读取失败";
+      }
+    }
+    async function startAll() {
+      log(await pywebview.api.start_all());
+      setTimeout(refresh, 2000);
+    }
+    async function openAdmin() {
+      log(await pywebview.api.open_admin());
+    }
+    async function openExt() {
+      log(await pywebview.api.open_extensions());
+    }
+    async function stopAll() {
+      log(await pywebview.api.stop_all());
+      refresh();
+    }
+    refresh();
+    setInterval(refresh, 3000);
+  </script>
+</body>
+</html>
